@@ -8,7 +8,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
-    [string]$Version = '0.5.9',
+    [string]$Version = '0.5.10',
 
     [Parameter(Mandatory = $false)]
     [string]$Configuration = 'Release',
@@ -23,7 +23,16 @@ param(
     [string]$CertificateSubject = 'CN=Taillieu Consultancy',
 
     [Parameter(Mandatory = $false)]
+    [string]$PfxPath = '',
+
+    [Parameter(Mandatory = $false)]
+    [string]$PfxPassword = '',
+
+    [Parameter(Mandatory = $false)]
     [string]$TimestampUrl = 'http://timestamp.digicert.com',
+
+    [Parameter(Mandatory = $false)]
+    [switch]$SkipVerify,
 
     [Parameter(Mandatory = $false)]
     [switch]$Install,
@@ -133,20 +142,40 @@ if ($LASTEXITCODE -ne 0) { throw "makeappx failed with exit code $LASTEXITCODE" 
 
 Write-Step "Signing MSIX"
 $signtool = Find-WindowsKitTool 'signtool.exe'
-$thumbprint = Resolve-CertificateThumbprint
-$signArgs = @('sign', '/fd', 'SHA256', '/sha1', $thumbprint)
+if ($PfxPath) {
+    if (-not (Test-Path -LiteralPath $PfxPath -PathType Leaf)) { throw "PFX not found: $PfxPath" }
+    $signArgs = @('sign', '/fd', 'SHA256', '/f', $PfxPath)
+    if ($PfxPassword) { $signArgs += @('/p', $PfxPassword) }
+}
+else {
+    $thumbprint = Resolve-CertificateThumbprint
+    $signArgs = @('sign', '/fd', 'SHA256', '/sha1', $thumbprint)
+}
 if ($TimestampUrl) { $signArgs += @('/tr', $TimestampUrl, '/td', 'SHA256') }
 $signArgs += $msix
 & $signtool @signArgs
 if ($LASTEXITCODE -ne 0 -and $TimestampUrl) {
     Write-Host '[lvc-package] Timestamped signing failed; retrying without timestamp for local/test cert.' -ForegroundColor Yellow
-    & $signtool sign /fd SHA256 /sha1 $thumbprint $msix
+    if ($PfxPath) {
+        $retryArgs = @('sign', '/fd', 'SHA256', '/f', $PfxPath)
+        if ($PfxPassword) { $retryArgs += @('/p', $PfxPassword) }
+        $retryArgs += $msix
+        & $signtool @retryArgs
+    }
+    else {
+        & $signtool sign /fd SHA256 /sha1 $thumbprint $msix
+    }
 }
 if ($LASTEXITCODE -ne 0) { throw "signtool failed with exit code $LASTEXITCODE" }
 
-Write-Step "Verifying signature"
-& $signtool verify /pa /v $msix
-if ($LASTEXITCODE -ne 0) { throw "signature verification failed with exit code $LASTEXITCODE" }
+if ($SkipVerify) {
+    Write-Step "Skipping signature verification"
+}
+else {
+    Write-Step "Verifying signature"
+    & $signtool verify /pa /v $msix
+    if ($LASTEXITCODE -ne 0) { throw "signature verification failed with exit code $LASTEXITCODE" }
+}
 
 if ($Install -and $RestartExplorer) {
     Write-Step "Stopping Explorer before package update"

@@ -7,7 +7,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
-    [string]$Version = '0.5.9-beta'
+    [string]$Version = '0.5.10-beta'
 )
 
 Set-StrictMode -Version 2.0
