@@ -10,7 +10,7 @@ This is intentionally separate from stable `v0.4.0`. The stable installer remain
 - Exposes one root command: **Local Video Compressor**.
 - Exposes three subcommands: **Balanced**, **Small**, **High Quality**.
 - Validates exactly one selected video file.
-- Spawns the stable installed PowerShell compressor script in a new console.
+- Launches the packaged native host, which runs compression outside Explorer.
 - Returns immediately to Explorer.
 
 ## What this must not do
@@ -18,7 +18,7 @@ This is intentionally separate from stable `v0.4.0`. The stable installer remain
 - Do not run `ffmpeg` inside Explorer.
 - Do not block Explorer on compression.
 - Do not keep state in Explorer.
-- Do not write persistent logs from the shell extension.
+- Do not write persistent logs from the shell extension unless explicitly enabled in `%LOCALAPPDATA%\LocalVideoCompressor\settings.json`.
 - Do not register with `regsvr32` as the final beta path.
 
 ## Build target
@@ -58,25 +58,22 @@ packaging\AppxManifest.xml
 The manifest uses:
 
 - `windows.comServer` for the COM DLL
-- `windows.fileExplorerContextMenus` for `.mp4`, `.mov`, `.mkv`, `.avi`, `.webm`
+- `windows.fileExplorerContextMenus` wildcard registration; `GetState` hides unsupported files and enables `.mp4`, `.mov`, `.mkv`, `.avi`, `.webm`
 - CLSID `8AC3CC15-339A-4202-9E1E-56F80717AC92`
 
 The package must be signed. For test installs, use a local trusted test certificate. For real multi-device install, use a proper code-signing certificate.
 
-## Install flow we still need to validate on Windows
+## Install flow
 
-1. Install stable `v0.4.0` first so this path exists:
+1. Build/sign/install the beta package:
 
-```text
-%LOCALAPPDATA%\Programs\LocalVideoCompressor\scripts\Compress-Video.ps1
+```powershell
+.\native\Package-BetaMsix.ps1 -Install -RestartExplorer
 ```
 
-2. Build the native beta solution.
-3. Package/sign the manifest + DLL + host EXE + assets.
-4. Install the package.
-5. Restart Explorer.
-6. Right-click a supported video file.
-7. Confirm the command appears in the primary Windows 11 context menu.
+2. Right-click a supported video file.
+3. Confirm the command appears in the primary Windows 11 context menu.
+4. Confirm compression starts without a random command terminal in normal mode.
 
 ## Risk note
 

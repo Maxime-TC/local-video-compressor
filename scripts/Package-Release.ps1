@@ -7,7 +7,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
-    [string]$Version = '0.4.0'
+    [string]$Version = '0.5.9-beta'
 )
 
 Set-StrictMode -Version 2.0
@@ -24,7 +24,7 @@ if (Test-Path -LiteralPath $zipPath) { Remove-Item -LiteralPath $zipPath -Force 
 
 New-Item -ItemType Directory -Path $packageRoot -Force | Out-Null
 
-foreach ($item in @('scripts', 'assets', 'bin', 'third_party')) {
+foreach ($item in @('scripts', 'assets', 'bin', 'third_party', 'config')) {
     Copy-Item -LiteralPath (Join-Path $root $item) -Destination (Join-Path $packageRoot $item) -Recurse -Force
 }
 foreach ($file in @('README.md', 'CHANGELOG.md', 'LICENSE', 'Install-ContextMenu.cmd', 'Uninstall-ContextMenu.cmd')) {

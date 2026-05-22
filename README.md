@@ -2,7 +2,7 @@
 
 Windows context-menu tool om screenrecordings en andere video's lokaal kleiner te maken met `ffmpeg`.
 
-> Stable line: `v0.4.0` remains the finished, supported registry-based installer. This beta branch adds an experimental native Windows 11 shell-extension scaffold under `native/` to test primary context-menu integration.
+> Stable line: `v0.4.0` remains the registry-based fallback. This beta branch adds a packaged native Windows 11 shell extension under `native/` for primary context-menu integration.
 
 Doel: rechtsklik in Windows Verkenner op een video → kies een compressiepreset → er verschijnt een nieuw `.mp4` bestand naast het origineel. Geen cloud, geen upload, geen achtergrondservice.
 
@@ -17,6 +17,7 @@ Production-ready MVP voor persoonlijk/teamgebruik:
 - schrijft eerst naar tijdelijke output en verplaatst pas na succesvolle compressie
 - ruimt gedeeltelijke output op bij fouten
 - valt terug van hardware encoding naar CPU encoding als de GPU encoder faalt
+- Windows 11 beta draait standaard stil zonder willekeurige command windows; debug logging/console kan expliciet via settings
 
 ## Installatie
 
@@ -51,7 +52,7 @@ Als het menu niet meteen zichtbaar is: herstart Windows Verkenner of meld opnieu
    - **Balanced** — goede standaardkeuze, max. 1080p.
    - **Small** — kleiner bestand, meer kwaliteitsverlies, max. 720p.
    - **High Quality** — betere kwaliteit, originele resolutie.
-4. Er opent een PowerShell/ffmpeg venster met progress.
+4. De Windows 11 beta start de compressie stil op de achtergrond. De klassieke registry-fallback opent geen permanent venster.
 5. Output verschijnt naast het origineel als `naam_compressed.mp4`.
 
 Als `naam_compressed.mp4` al bestaat, gebruikt de tool automatisch een timestamp.
@@ -72,7 +73,34 @@ Als `naam_compressed.mp4` al bestaat, gebruikt de tool automatisch een timestamp
 - Originele video wordt nooit gewijzigd.
 - Geen adminrechten nodig.
 - Geen achtergrondservice of autostart.
-- Geen permanente logbestanden met bestandsnamen/paden.
+- Geen permanente logbestanden met bestandsnamen/paden, tenzij debug logging expliciet aangezet is.
+
+## Debug settings
+
+Standaard schrijft de app geen logs en opent ze geen command window. Voor debugging kun je deze file aanmaken:
+
+```text
+%LOCALAPPDATA%\LocalVideoCompressor\settings.json
+```
+
+Voorbeeld:
+
+```json
+{
+  "debug": true,
+  "writeLog": true,
+  "showConsole": false,
+  "pauseOnExit": false,
+  "showSuccessMessage": false,
+  "showErrorMessage": true,
+  "shellExtensionLogging": false
+}
+```
+
+- `writeLog`: schrijft compressielogs naar `%LOCALAPPDATA%\LocalVideoCompressor\logs`.
+- `showConsole`: opent bewust een consolevenster voor live debugging.
+- `pauseOnExit`: houdt dat consolevenster open na afloop; alleen nuttig samen met `showConsole`.
+- `shellExtensionLogging`: logt Explorer shell-extension callbacks. Alleen gebruiken bij context-menu bugs.
 
 ## Resourcegedrag
 
@@ -114,9 +142,15 @@ Dit verwijdert:
 
 ## Windows 11 context-menu
 
-Deze tool gebruikt veilige HKCU registry entries. Daardoor komt hij op Windows 11 meestal onder **Show more options** / **Meer opties weergeven** terecht.
+De klassieke installer gebruikt veilige HKCU registry entries. Daardoor komt hij op Windows 11 meestal onder **Show more options** / **Meer opties weergeven** terecht.
 
-Direct in het nieuwe Windows 11 menu verschijnen vereist normaal een native/packaged shell extension (`IExplorerCommand`/MSIX/COM). Dat is mogelijk als volgende stap, maar bewust niet in deze scriptgebaseerde MVP opgenomen omdat dat complexer en invasiever is.
+De beta branch bevat nu ook een native/packaged shell extension (`IExplorerCommand`/MSIX/COM) onder `native/`, zodat **Local Video Compressor** in het primaire Windows 11 context-menu kan verschijnen. Build/install helper:
+
+```powershell
+.\native\Package-BetaMsix.ps1 -Install -RestartExplorer
+```
+
+Normale beta-modus opent geen willekeurige command terminal. Debug console/logging kan via de settings JSON hierboven.
 
 ## ffmpeg
 

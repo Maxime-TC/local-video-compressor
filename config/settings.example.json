@@ -1,0 +1,9 @@
+{
+  "debug": false,
+  "writeLog": false,
+  "showConsole": false,
+  "pauseOnExit": false,
+  "showSuccessMessage": false,
+  "showErrorMessage": true,
+  "shellExtensionLogging": false
+}

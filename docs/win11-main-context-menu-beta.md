@@ -27,10 +27,10 @@ Explorer will load the beta extension, so the extension must stay tiny:
 
 - no ffmpeg work inside Explorer;
 - no long-running code inside Explorer;
-- no PowerShell parsing inside Explorer beyond spawning the already-installed compressor script;
+- no PowerShell work inside Explorer; Explorer only launches the tiny packaged host EXE;
 - no background service;
 - no network;
-- no persistent file logging;
+- no persistent file logging unless explicitly enabled via `%LOCALAPPDATA%\LocalVideoCompressor\settings.json`;
 - no global hooks;
 - no manual `regsvr32` path for the beta target.
 
@@ -39,7 +39,7 @@ The native extension should only:
 1. display `Local Video Compressor`;
 2. show subcommands: `Balanced`, `Small`, `High Quality`;
 3. validate that exactly one supported video file is selected;
-4. launch the existing installed compressor script from `%LOCALAPPDATA%\Programs\LocalVideoCompressor\scripts\Compress-Video.ps1`;
+4. launch the packaged native host, which runs the LocalAppData compressor backend outside Explorer;
 5. return quickly to Explorer.
 
 ## Beta scaffold in this branch
@@ -56,6 +56,7 @@ Contents:
 - Root command with subcommands for the three presets.
 - Manifest draft for packaged COM + `windows.fileExplorerContextMenus`.
 - Visual Studio project file targeting Windows SDK / C++17.
+- `native/Package-BetaMsix.ps1` helper to build, sign, install, and optionally restart Explorer.
 
 ## Beta acceptance checklist
 
@@ -66,7 +67,8 @@ This beta should not replace stable until all are true on a Windows 11 test mach
 - [ ] Package installs without admin using a trusted test certificate or proper signing.
 - [ ] Explorer restart loads the extension.
 - [ ] Menu appears in the primary Windows 11 context menu for `.mp4`, `.mov`, `.mkv`, `.avi`, `.webm`.
-- [ ] Commands launch compression using the stable installed script.
+- [ ] Commands launch compression using the packaged native host + LocalAppData compressor backend.
+- [ ] Normal mode does not leave random command terminals open.
 - [ ] Explorer remains stable after repeated open/close/right-click cycles.
 - [ ] No persistent process remains after compression finishes.
 - [ ] Uninstall removes package and context-menu entries.
@@ -75,5 +77,5 @@ This beta should not replace stable until all are true on a Windows 11 test mach
 ## Open questions
 
 - Whether Windows 11 reliably renders `EnumSubCommands` as a submenu in the primary menu or whether we should register three top-level verbs instead.
-- Whether sparse package registration is enough for our unpackaged compressor layout, or whether we should move to a full MSIX installer.
+- Whether this full MSIX layout is enough for all Maxime devices, or whether we should add an `.appinstaller` update flow.
 - Whether we need a real code-signing certificate before this feels acceptable across all Maxime devices.

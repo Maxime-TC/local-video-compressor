@@ -2,8 +2,8 @@
 #include "resource.h"
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,5,0,0
- PRODUCTVERSION 0,5,0,0
+ FILEVERSION 0,5,9,0
+ PRODUCTVERSION 0,5,9,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -20,11 +20,11 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Taillieu Consultancy"
             VALUE "FileDescription", "Local Video Compressor Windows 11 shell extension beta"
-            VALUE "FileVersion", "0.5.0-beta"
+            VALUE "FileVersion", "0.5.9-beta"
             VALUE "InternalName", "LocalVideoCompressorShellExtension.dll"
             VALUE "OriginalFilename", "LocalVideoCompressorShellExtension.dll"
             VALUE "ProductName", "Local Video Compressor"
-            VALUE "ProductVersion", "0.5.0-beta"
+            VALUE "ProductVersion", "0.5.9-beta"
         END
     END
     BLOCK "VarFileInfo"

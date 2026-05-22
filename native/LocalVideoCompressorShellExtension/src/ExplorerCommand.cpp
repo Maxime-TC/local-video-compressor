@@ -142,6 +142,18 @@ namespace
         return root;
     }
 
+    std::wstring GetModuleDirectory()
+    {
+        wchar_t modulePath[MAX_PATH] = {};
+        const DWORD len = GetModuleFileNameW(g_hInstance, modulePath, ARRAYSIZE(modulePath));
+        if (len == 0 || len >= ARRAYSIZE(modulePath)) return {};
+
+        std::wstring path(modulePath);
+        const size_t slash = path.find_last_of(L"\\/");
+        if (slash == std::wstring::npos) return {};
+        return path.substr(0, slash);
+    }
+
     bool FileExists(const std::wstring& path)
     {
         const DWORD attrs = GetFileAttributesW(path.c_str());
@@ -150,6 +162,13 @@ namespace
 
     std::wstring BuildIconPath()
     {
+        const std::wstring moduleDir = GetModuleDirectory();
+        if (!moduleDir.empty())
+        {
+            const std::wstring packagedIcon = moduleDir + L"\\assets\\local-video-compressor.ico";
+            if (FileExists(packagedIcon)) return packagedIcon;
+        }
+
         std::wstring root = GetInstalledAppRoot();
         if (root.empty()) return {};
         return root + L"\\assets\\local-video-compressor.ico";
@@ -157,19 +176,17 @@ namespace
 
     HRESULT LaunchCompressor(const std::wstring& selectedPath, CommandKind kind)
     {
-        const std::wstring root = GetInstalledAppRoot();
-        if (root.empty()) return E_FAIL;
+        const std::wstring moduleDir = GetModuleDirectory();
+        if (moduleDir.empty()) return E_FAIL;
 
-        const std::wstring script = root + L"\\scripts\\Compress-Video.ps1";
-        if (!FileExists(script)) return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+        const std::wstring host = moduleDir + L"\\LocalVideoCompressorBetaHost.exe";
+        if (!FileExists(host)) return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 
-        std::wstring commandLine = L"powershell.exe -NoProfile -ExecutionPolicy Bypass -File ";
-        commandLine += QuoteCommandLineArg(script);
-        commandLine += L" -Path ";
+        std::wstring commandLine = QuoteCommandLineArg(host);
+        commandLine += L" --compress --path ";
         commandLine += QuoteCommandLineArg(selectedPath);
-        commandLine += L" -Preset ";
+        commandLine += L" --preset ";
         commandLine += QuoteCommandLineArg(GetPresetName(kind));
-        commandLine += L" -PauseOnExit";
 
         STARTUPINFOW si{};
         si.cb = sizeof(si);
@@ -179,7 +196,7 @@ namespace
         std::vector<wchar_t> buffer(commandLine.begin(), commandLine.end());
         buffer.push_back(L'\0');
 
-        if (!CreateProcessW(nullptr, buffer.data(), nullptr, nullptr, FALSE, CREATE_NEW_CONSOLE, nullptr, nullptr, &si, &pi))
+        if (!CreateProcessW(host.c_str(), buffer.data(), nullptr, nullptr, FALSE, 0, nullptr, moduleDir.c_str(), &si, &pi))
         {
             return HRESULT_FROM_WIN32(GetLastError());
         }
@@ -275,7 +292,7 @@ IFACEMETHODIMP ExplorerCommand::GetState(IShellItemArray* psiItemArray, BOOL, EX
 {
     TraceLog(L"ExplorerCommand::GetState");
     if (!pCmdState) return E_POINTER;
-    *pCmdState = ECS_DISABLED;
+    *pCmdState = ECS_HIDDEN;
 
     std::wstring path;
     HRESULT hr = GetSingleSelectedPath(psiItemArray, path);

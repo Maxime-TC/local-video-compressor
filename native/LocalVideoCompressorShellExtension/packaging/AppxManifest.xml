@@ -12,7 +12,7 @@
   <Identity
     Name="TaillieuConsultancy.LocalVideoCompressor.Beta"
     Publisher="CN=Taillieu Consultancy"
-    Version="0.5.4.0" />
+    Version="0.5.9.0" />
 
   <Properties>
     <DisplayName>Local Video Compressor Beta</DisplayName>
