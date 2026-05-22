@@ -12,7 +12,7 @@
   <Identity
     Name="TaillieuConsultancy.LocalVideoCompressor.Beta"
     Publisher="CN=Taillieu Consultancy"
-    Version="0.5.0.0" />
+    Version="0.5.4.0" />
 
   <Properties>
     <DisplayName>Local Video Compressor Beta</DisplayName>
@@ -25,7 +25,7 @@
   </Dependencies>
 
   <Resources>
-    <Resource Language="x-generate" />
+    <Resource Language="en-US" />
   </Resources>
 
   <Applications>
@@ -46,21 +46,14 @@
         </com:Extension>
         <desktop4:Extension Category="windows.fileExplorerContextMenus">
           <desktop4:FileExplorerContextMenus>
-            <desktop5:ItemType Type=".mp4">
-              <desktop5:Verb Id="LocalVideoCompressor" Clsid="8AC3CC15-339A-4202-9E1E-56F80717AC92" />
-            </desktop5:ItemType>
-            <desktop5:ItemType Type=".mov">
-              <desktop5:Verb Id="LocalVideoCompressor" Clsid="8AC3CC15-339A-4202-9E1E-56F80717AC92" />
-            </desktop5:ItemType>
-            <desktop5:ItemType Type=".mkv">
-              <desktop5:Verb Id="LocalVideoCompressor" Clsid="8AC3CC15-339A-4202-9E1E-56F80717AC92" />
-            </desktop5:ItemType>
-            <desktop5:ItemType Type=".avi">
-              <desktop5:Verb Id="LocalVideoCompressor" Clsid="8AC3CC15-339A-4202-9E1E-56F80717AC92" />
-            </desktop5:ItemType>
-            <desktop5:ItemType Type=".webm">
-              <desktop5:Verb Id="LocalVideoCompressor" Clsid="8AC3CC15-339A-4202-9E1E-56F80717AC92" />
-            </desktop5:ItemType>
+            <!--
+              Register as a wildcard ExplorerCommand and let GetState hide unsupported
+              files. This follows the proven NanaZip pattern and avoids Windows 11
+              builds silently skipping extension-specific desktop5 registrations.
+            -->
+            <desktop4:ItemType Type="*">
+              <desktop4:Verb Id="0000LocalVideoCompressor" Clsid="8AC3CC15-339A-4202-9E1E-56F80717AC92" />
+            </desktop4:ItemType>
           </desktop4:FileExplorerContextMenus>
         </desktop4:Extension>
       </Extensions>

@@ -46,10 +46,11 @@ enum class CommandKind
 extern HINSTANCE g_hInstance;
 extern long g_cDllRef;
 
+void TraceLog(const wchar_t* message);
 void DllAddRef();
 void DllRelease();
 
-class ExplorerCommand final : public IExplorerCommand
+class ExplorerCommand final : public IExplorerCommand, public IInitializeCommand, public IObjectWithSite
 {
 public:
     explicit ExplorerCommand(CommandKind kind) noexcept;
@@ -71,11 +72,19 @@ public:
     IFACEMETHODIMP GetFlags(EXPCMDFLAGS* pFlags) override;
     IFACEMETHODIMP EnumSubCommands(IEnumExplorerCommand** ppEnum) override;
 
+    // IInitializeCommand (Explorer may provide the manifest verb id here).
+    IFACEMETHODIMP Initialize(PCWSTR pszCommandName, IPropertyBag* ppb) override;
+
+    // IObjectWithSite (optional, but implemented for parity with ExplorerCommand samples).
+    IFACEMETHODIMP SetSite(IUnknown* punkSite) override;
+    IFACEMETHODIMP GetSite(REFIID riid, void** ppv) override;
+
 private:
     ~ExplorerCommand();
 
     long _refCount;
     CommandKind _kind;
+    IUnknown* _site;
 };
 
 class ExplorerCommandEnum final : public IEnumExplorerCommand

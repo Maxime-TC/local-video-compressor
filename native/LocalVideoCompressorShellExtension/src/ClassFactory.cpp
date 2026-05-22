@@ -14,6 +14,7 @@ ClassFactory::~ClassFactory()
 
 IFACEMETHODIMP ClassFactory::QueryInterface(REFIID riid, void** ppv)
 {
+    TraceLog(L"ClassFactory::QueryInterface");
     if (!ppv) return E_POINTER;
     *ppv = nullptr;
 
@@ -40,6 +41,7 @@ IFACEMETHODIMP_(ULONG) ClassFactory::Release()
 
 IFACEMETHODIMP ClassFactory::CreateInstance(IUnknown* pUnkOuter, REFIID riid, void** ppv)
 {
+    TraceLog(L"ClassFactory::CreateInstance");
     if (!ppv) return E_POINTER;
     *ppv = nullptr;
 

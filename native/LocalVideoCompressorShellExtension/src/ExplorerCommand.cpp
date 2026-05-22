@@ -192,24 +192,38 @@ namespace
     const CommandKind kSubCommands[] = { CommandKind::Balanced, CommandKind::Small, CommandKind::HighQuality };
 }
 
-ExplorerCommand::ExplorerCommand(CommandKind kind) noexcept : _refCount(1), _kind(kind)
+ExplorerCommand::ExplorerCommand(CommandKind kind) noexcept : _refCount(1), _kind(kind), _site(nullptr)
 {
     DllAddRef();
 }
 
 ExplorerCommand::~ExplorerCommand()
 {
+    if (_site) _site->Release();
     DllRelease();
 }
 
 IFACEMETHODIMP ExplorerCommand::QueryInterface(REFIID riid, void** ppv)
 {
+    TraceLog(L"ExplorerCommand::QueryInterface");
     if (!ppv) return E_POINTER;
     *ppv = nullptr;
 
     if (riid == IID_IUnknown || riid == IID_IExplorerCommand)
     {
         *ppv = static_cast<IExplorerCommand*>(this);
+        AddRef();
+        return S_OK;
+    }
+    if (riid == IID_IInitializeCommand)
+    {
+        *ppv = static_cast<IInitializeCommand*>(this);
+        AddRef();
+        return S_OK;
+    }
+    if (riid == IID_IObjectWithSite)
+    {
+        *ppv = static_cast<IObjectWithSite*>(this);
         AddRef();
         return S_OK;
     }
@@ -230,12 +244,14 @@ IFACEMETHODIMP_(ULONG) ExplorerCommand::Release()
 
 IFACEMETHODIMP ExplorerCommand::GetTitle(IShellItemArray*, LPWSTR* ppszName)
 {
+    TraceLog(L"ExplorerCommand::GetTitle");
     const std::wstring title = GetCommandTitle(_kind);
     return AllocString(title.c_str(), ppszName);
 }
 
 IFACEMETHODIMP ExplorerCommand::GetIcon(IShellItemArray*, LPWSTR* ppszIcon)
 {
+    TraceLog(L"ExplorerCommand::GetIcon");
     const std::wstring icon = BuildIconPath();
     if (icon.empty() || !FileExists(icon)) return AllocString(L"", ppszIcon);
     return AllocString(icon.c_str(), ppszIcon);
@@ -257,6 +273,7 @@ IFACEMETHODIMP ExplorerCommand::GetCanonicalName(GUID* pguidCommandName)
 
 IFACEMETHODIMP ExplorerCommand::GetState(IShellItemArray* psiItemArray, BOOL, EXPCMDSTATE* pCmdState)
 {
+    TraceLog(L"ExplorerCommand::GetState");
     if (!pCmdState) return E_POINTER;
     *pCmdState = ECS_DISABLED;
 
@@ -270,6 +287,7 @@ IFACEMETHODIMP ExplorerCommand::GetState(IShellItemArray* psiItemArray, BOOL, EX
 
 IFACEMETHODIMP ExplorerCommand::Invoke(IShellItemArray* psiItemArray, IBindCtx*)
 {
+    TraceLog(L"ExplorerCommand::Invoke");
     if (_kind == CommandKind::Root) return S_FALSE;
 
     std::wstring path;
@@ -282,6 +300,7 @@ IFACEMETHODIMP ExplorerCommand::Invoke(IShellItemArray* psiItemArray, IBindCtx*)
 
 IFACEMETHODIMP ExplorerCommand::GetFlags(EXPCMDFLAGS* pFlags)
 {
+    TraceLog(L"ExplorerCommand::GetFlags");
     if (!pFlags) return E_POINTER;
     *pFlags = (_kind == CommandKind::Root) ? ECF_HASSUBCOMMANDS : ECF_DEFAULT;
     return S_OK;
@@ -289,6 +308,7 @@ IFACEMETHODIMP ExplorerCommand::GetFlags(EXPCMDFLAGS* pFlags)
 
 IFACEMETHODIMP ExplorerCommand::EnumSubCommands(IEnumExplorerCommand** ppEnum)
 {
+    TraceLog(L"ExplorerCommand::EnumSubCommands");
     if (!ppEnum) return E_POINTER;
     *ppEnum = nullptr;
 
@@ -298,6 +318,26 @@ IFACEMETHODIMP ExplorerCommand::EnumSubCommands(IEnumExplorerCommand** ppEnum)
     if (!enumerator) return E_OUTOFMEMORY;
     *ppEnum = enumerator;
     return S_OK;
+}
+
+IFACEMETHODIMP ExplorerCommand::Initialize(PCWSTR, IPropertyBag*)
+{
+    return S_OK;
+}
+
+IFACEMETHODIMP ExplorerCommand::SetSite(IUnknown* punkSite)
+{
+    if (punkSite) punkSite->AddRef();
+    if (_site) _site->Release();
+    _site = punkSite;
+    return S_OK;
+}
+
+IFACEMETHODIMP ExplorerCommand::GetSite(REFIID riid, void** ppv)
+{
+    if (!ppv) return E_POINTER;
+    *ppv = nullptr;
+    return _site ? _site->QueryInterface(riid, ppv) : E_FAIL;
 }
 
 ExplorerCommandEnum::ExplorerCommandEnum() : _refCount(1), _index(0)
