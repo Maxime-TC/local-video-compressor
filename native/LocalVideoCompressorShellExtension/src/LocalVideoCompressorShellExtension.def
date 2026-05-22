@@ -1,0 +1,4 @@
+LIBRARY "LocalVideoCompressorShellExtension"
+EXPORTS
+    DllCanUnloadNow PRIVATE
+    DllGetClassObject PRIVATE

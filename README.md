@@ -2,6 +2,8 @@
 
 Windows context-menu tool om screenrecordings en andere video's lokaal kleiner te maken met `ffmpeg`.
 
+> Stable line: `v0.4.0` remains the finished, supported registry-based installer. This beta branch adds an experimental native Windows 11 shell-extension scaffold under `native/` to test primary context-menu integration.
+
 Doel: rechtsklik in Windows Verkenner op een video → kies een compressiepreset → er verschijnt een nieuw `.mp4` bestand naast het origineel. Geen cloud, geen upload, geen achtergrondservice.
 
 ## Status

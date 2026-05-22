@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
+  xmlns:desktop5="http://schemas.microsoft.com/appx/manifest/desktop/windows10/5"
+  xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap desktop desktop4 desktop5 com rescap">
+
+  <Identity
+    Name="TaillieuConsultancy.LocalVideoCompressor.Beta"
+    Publisher="CN=Taillieu Consultancy"
+    Version="0.5.0.0" />
+
+  <Properties>
+    <DisplayName>Local Video Compressor Beta</DisplayName>
+    <PublisherDisplayName>Taillieu Consultancy</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.22000.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="x-generate" />
+  </Resources>
+
+  <Applications>
+    <Application Id="App" Executable="LocalVideoCompressorBetaHost.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Local Video Compressor Beta"
+        Description="Windows 11 File Explorer context-menu beta for Local Video Compressor"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png" />
+      <Extensions>
+        <com:Extension Category="windows.comServer">
+          <com:ComServer>
+            <com:SurrogateServer DisplayName="Local Video Compressor Shell Extension">
+              <com:Class Id="8AC3CC15-339A-4202-9E1E-56F80717AC92" Path="LocalVideoCompressorShellExtension.dll" ThreadingModel="STA" />
+            </com:SurrogateServer>
+          </com:ComServer>
+        </com:Extension>
+        <desktop4:Extension Category="windows.fileExplorerContextMenus">
+          <desktop4:FileExplorerContextMenus>
+            <desktop5:ItemType Type=".mp4">
+              <desktop5:Verb Id="LocalVideoCompressor" Clsid="8AC3CC15-339A-4202-9E1E-56F80717AC92" />
+            </desktop5:ItemType>
+            <desktop5:ItemType Type=".mov">
+              <desktop5:Verb Id="LocalVideoCompressor" Clsid="8AC3CC15-339A-4202-9E1E-56F80717AC92" />
+            </desktop5:ItemType>
+            <desktop5:ItemType Type=".mkv">
+              <desktop5:Verb Id="LocalVideoCompressor" Clsid="8AC3CC15-339A-4202-9E1E-56F80717AC92" />
+            </desktop5:ItemType>
+            <desktop5:ItemType Type=".avi">
+              <desktop5:Verb Id="LocalVideoCompressor" Clsid="8AC3CC15-339A-4202-9E1E-56F80717AC92" />
+            </desktop5:ItemType>
+            <desktop5:ItemType Type=".webm">
+              <desktop5:Verb Id="LocalVideoCompressor" Clsid="8AC3CC15-339A-4202-9E1E-56F80717AC92" />
+            </desktop5:ItemType>
+          </desktop4:FileExplorerContextMenus>
+        </desktop4:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>
