@@ -14,7 +14,7 @@ param(
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
 
-$AppVersion = '0.4.0'
+$AppVersion = '0.5.9-beta'
 $extensions = @('.mp4', '.mov', '.mkv', '.avi', '.webm')
 $sourceRoot = Split-Path -Parent $PSScriptRoot
 
@@ -105,7 +105,7 @@ function Register-ContextMenu([string]$Root) {
             Set-ItemProperty -Path $itemKey -Name 'MUIVerb' -Value $item.Label
             Set-ItemProperty -Path $itemKey -Name 'Icon' -Value $iconPath
 
-            $command = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{0}" -Path "%1" -Preset {1} -PauseOnExit' -f $scriptPath, $item.Preset
+            $command = 'powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "{0}" -Path "%1" -Preset {1}' -f $scriptPath, $item.Preset
             Set-DefaultValue -RegistryPath $commandKey -Value $command
         }
     }

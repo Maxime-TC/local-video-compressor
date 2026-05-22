@@ -21,7 +21,7 @@ param(
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
 
-$AppVersion = '0.4.0'
+$AppVersion = '0.5.9-beta'
 $SupportedExtensions = @('.mp4', '.mov', '.mkv', '.avi', '.webm')
 $TempOutputPath = $null
 $FinalOutputPath = $null
@@ -123,7 +123,7 @@ function Invoke-FfmpegFriendly {
         [string]$ModeName
     )
 
-    Write-Info "Start compressie ($ModeName). ffmpeg toont hieronder de voortgang."
+    Write-Info "Start compressie ($ModeName)."
     Write-Info "Procesprioriteit: BelowNormal. Dit houdt Windows bruikbaar tijdens het comprimeren."
 
     $psi = New-Object System.Diagnostics.ProcessStartInfo
