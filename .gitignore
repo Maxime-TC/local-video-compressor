@@ -1,0 +1,19 @@
+# Windows/local noise
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Logs/temp output
+*.log
+*.tmp
+*_compressed.mp4
+*_compressed_*.mp4
+
+# PowerShell/editor noise
+.vscode/
+.idea/
+*.ps1xml
+
+# Release packages
+/dist/
+*.zip
