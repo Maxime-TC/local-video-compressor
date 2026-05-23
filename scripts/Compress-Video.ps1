@@ -21,7 +21,7 @@ param(
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
 
-$AppVersion = '0.5.9-beta'
+$AppVersion = '0.5.10-beta'
 $SupportedExtensions = @('.mp4', '.mov', '.mkv', '.avi', '.webm')
 $TempOutputPath = $null
 $FinalOutputPath = $null

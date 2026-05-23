@@ -19,7 +19,7 @@
 namespace
 {
     constexpr const wchar_t* kAppName = L"Local Video Compressor";
-    constexpr const wchar_t* kAppVersion = L"0.5.9-beta";
+    constexpr const wchar_t* kAppVersion = L"0.5.10-beta";
 
     struct Settings
     {

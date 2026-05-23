@@ -21,14 +21,33 @@ Production-ready MVP voor persoonlijk/teamgebruik:
 
 ## Installatie
 
-1. Download en unzip de release.
-2. Dubbelklik:
+### Aanbevolen voor Windows 11 beta
+
+Download en start:
+
+```text
+LocalVideoCompressor-0.5.10-beta-Win11-Setup.exe
+```
+
+Deze installer wizard:
+
+- installeert de backend onder `%LOCALAPPDATA%\Programs\LocalVideoCompressor`
+- installeert de MSIX shell extension voor het primaire Windows 11 context-menu
+- vertrouwt het meegeleverde beta/testcert voor de huidige Windows-gebruiker
+- kan Windows Verkenner automatisch herstarten
+- voorziet een gewone uninstall wizard via Windows **Apps & features**
+
+> Let op: deze beta/testcert flow is alleen bedoeld voor Maxime-controlled devices. Voor publieke distributie is echte code signing nodig.
+
+### Classic fallback
+
+Download en unzip de release, of kies de classic fallback in de installer. Dubbelklik:
 
 ```text
 Install-ContextMenu.cmd
 ```
 
-De installer kopieert de app naar:
+De classic installer kopieert de app naar:
 
 ```text
 %LOCALAPPDATA%\Programs\LocalVideoCompressor
@@ -42,7 +61,7 @@ en registreert het context-menu voor:
 - `.avi`
 - `.webm`
 
-Als het menu niet meteen zichtbaar is: herstart Windows Verkenner of meld opnieuw aan.
+Op Windows 11 verschijnt deze classic fallback meestal onder **Show more options**. Gebruik de Win11 setup wizard/MSIX voor het hoofd-contextmenu.
 
 ## Gebruik
 
@@ -128,6 +147,10 @@ Andere presets:
 ```
 
 ## Uninstall
+
+Voor de Win11 setup wizard: ga naar Windows **Settings → Apps → Installed apps → Local Video Compressor → Uninstall**. De uninstall wizard verwijdert de MSIX package, context-menu registratie, backend files en beta-certificaat voor deze app.
+
+Voor de classic fallback kun je ook dubbelklikken:
 
 Dubbelklik:
 

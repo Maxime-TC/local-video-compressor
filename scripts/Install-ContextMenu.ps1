@@ -8,13 +8,16 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
-    [string]$InstallDir = (Join-Path $env:LOCALAPPDATA 'Programs\LocalVideoCompressor')
+    [string]$InstallDir = (Join-Path $env:LOCALAPPDATA 'Programs\LocalVideoCompressor'),
+
+    [Parameter(Mandatory = $false)]
+    [switch]$SkipClassicContextMenu
 )
 
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
 
-$AppVersion = '0.5.9-beta'
+$AppVersion = '0.5.10-beta'
 $extensions = @('.mp4', '.mov', '.mkv', '.avi', '.webm')
 $sourceRoot = Split-Path -Parent $PSScriptRoot
 
@@ -61,7 +64,7 @@ function Copy-AppFiles([string]$Source, [string]$Destination) {
 
     New-Item -ItemType Directory -Path $Destination -Force | Out-Null
 
-    foreach ($item in @('scripts', 'assets', 'bin', 'third_party')) {
+    foreach ($item in @('scripts', 'assets', 'bin', 'third_party', 'config', 'native')) {
         $src = Join-Path $Source $item
         if (Test-Path -LiteralPath $src) {
             Copy-Item -LiteralPath $src -Destination (Join-Path $Destination $item) -Recurse -Force
@@ -118,12 +121,17 @@ try {
     Write-Info "Doel: $InstallDir"
 
     Copy-AppFiles -Source $sourceRoot -Destination $InstallDir
-    Register-ContextMenu -Root $InstallDir
+    if ($SkipClassicContextMenu) {
+        Write-Info 'Classic HKCU context-menu registratie overgeslagen; MSIX shell extension verzorgt het Windows 11 hoofdmenu.'
+    }
+    else {
+        Register-ContextMenu -Root $InstallDir
+    }
 
     Write-Host ''
     Write-Host 'Local Video Compressor is geïnstalleerd.' -ForegroundColor Green
     Write-Host "Installatiemap: $InstallDir"
-    Write-Host ('Context-menu voor: ' + ($extensions -join ', '))
+    if (-not $SkipClassicContextMenu) { Write-Host ('Classic context-menu voor: ' + ($extensions -join ', ')) }
     Write-Host ''
     Write-Host 'Gebruik: rechtsklik video > Local Video Compressor > Balanced / Small / High Quality'
     Write-Host 'Herstart Windows Verkenner als je het menu niet meteen ziet.' -ForegroundColor Yellow

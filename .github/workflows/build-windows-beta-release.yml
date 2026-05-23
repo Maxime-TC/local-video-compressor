@@ -1,0 +1,85 @@
+name: Build Windows beta release
+
+on:
+  push:
+    branches:
+      - feature/install-uninstall-wizards
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows-release:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create temporary beta signing certificate
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Path native\dist -Force | Out-Null
+          $passwordText = [System.Guid]::NewGuid().ToString('N')
+          $dist = Resolve-Path native\dist
+          $keyPath = Join-Path $dist 'TaillieuConsultancy-LocalVideoCompressor-Beta.key.pem'
+          $pemPath = Join-Path $dist 'TaillieuConsultancy-LocalVideoCompressor-Beta.cert.pem'
+          $cerPath = Join-Path $dist 'TaillieuConsultancy-LocalVideoCompressor-Beta.cer'
+          $pfxPath = Join-Path $dist 'TaillieuConsultancy-LocalVideoCompressor-Beta.pfx'
+
+          & openssl req -x509 -newkey rsa:3072 -sha256 -days 730 -nodes `
+            -subj '/CN=Taillieu Consultancy' `
+            -addext 'keyUsage=digitalSignature' `
+            -addext 'extendedKeyUsage=codeSigning' `
+            -keyout $keyPath -out $pemPath
+          if ($LASTEXITCODE -ne 0) { throw "openssl certificate creation failed with exit code $LASTEXITCODE" }
+
+          & openssl x509 -in $pemPath -outform DER -out $cerPath
+          if ($LASTEXITCODE -ne 0) { throw "openssl DER export failed with exit code $LASTEXITCODE" }
+
+          & openssl pkcs12 -export -out $pfxPath -inkey $keyPath -in $pemPath -passout "pass:$passwordText"
+          if ($LASTEXITCODE -ne 0) { throw "openssl PFX export failed with exit code $LASTEXITCODE" }
+
+          Remove-Item -LiteralPath $keyPath,$pemPath -Force
+          "BETA_PFX_PATH=$pfxPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "BETA_PFX_PASSWORD=$passwordText" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "Created temporary beta signing certificate. Public cert: $cerPath"
+
+      - name: Build and sign MSIX
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          .\native\Package-BetaMsix.ps1 -Version 0.5.10 -PfxPath $env:BETA_PFX_PATH -PfxPassword $env:BETA_PFX_PASSWORD -TimestampUrl '' -SkipVerify
+          Remove-Item -LiteralPath $env:BETA_PFX_PATH -Force
+          Get-FileHash native\dist\LocalVideoCompressor-Beta-0.5.10-signed.msix -Algorithm SHA256 | Format-List
+          Get-FileHash native\dist\TaillieuConsultancy-LocalVideoCompressor-Beta.cer -Algorithm SHA256 | Format-List
+
+      - name: Build classic ZIP
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          .\scripts\Package-Release.ps1 -Version 0.5.10-beta
+          Get-FileHash dist\local-video-compressor-v0.5.10-beta.zip -Algorithm SHA256 | Format-List
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      - name: Build installer wizard
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installers\windows\LocalVideoCompressor.iss
+          Get-FileHash dist\LocalVideoCompressor-0.5.10-beta-Win11-Setup.exe -Algorithm SHA256 | Format-List
+
+      - name: Upload beta artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: local-video-compressor-v0.5.10-beta-windows
+          if-no-files-found: error
+          path: |
+            dist/LocalVideoCompressor-0.5.10-beta-Win11-Setup.exe
+            dist/local-video-compressor-v0.5.10-beta.zip
+            native/dist/LocalVideoCompressor-Beta-0.5.10-signed.msix
+            native/dist/TaillieuConsultancy-LocalVideoCompressor-Beta.cer
