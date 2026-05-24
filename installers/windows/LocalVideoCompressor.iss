@@ -72,9 +72,10 @@ Type: filesandordirs; Name: "{localappdata}\LocalVideoCompressor\logs"
 [Code]
 function InitializeSetup(): Boolean;
 begin
-  MsgBox('This beta is intended for Maxime-controlled devices only.' + #13#10#13#10 +
-    'For the modern Windows 11 main context menu, keep the MSIX integration selected. The classic fallback appears under Show more options.',
-    mbInformation, MB_OK);
+  if not WizardSilent then
+    MsgBox('This beta is intended for Maxime-controlled devices only.' + #13#10#13#10 +
+      'For the modern Windows 11 main context menu, keep the MSIX integration selected. The classic fallback appears under Show more options.',
+      mbInformation, MB_OK);
   Result := True;
 end;
 
