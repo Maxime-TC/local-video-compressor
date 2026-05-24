@@ -51,15 +51,12 @@ try {
     # CurrentUser for non-elevated/manual installs.
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = [Security.Principal.WindowsPrincipal]::new($identity)
-    if ($principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-        foreach ($store in @('Root', 'TrustedPublisher', 'TrustedPeople')) {
-            Add-CertificateToStore -Scope 'LocalMachine' -StoreName $store -Path $resolvedCert
-        }
+    if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        throw 'Windows 11 main context-menu installatie vereist administratorrechten om het MSIX beta-certificaat in de LocalMachine trust stores te plaatsen. Start de installer opnieuw en accepteer de UAC prompt.'
     }
-    else {
-        foreach ($store in @('Root', 'TrustedPublisher', 'TrustedPeople')) {
-            Add-CertificateToStore -Scope 'CurrentUser' -StoreName $store -Path $resolvedCert
-        }
+
+    foreach ($store in @('Root', 'TrustedPublisher', 'TrustedPeople')) {
+        Add-CertificateToStore -Scope 'LocalMachine' -StoreName $store -Path $resolvedCert
     }
 
     Write-Info 'MSIX package installeren/updaten'
