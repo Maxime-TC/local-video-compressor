@@ -23,12 +23,11 @@ $ErrorActionPreference = 'Stop'
 function Write-Info([string]$Message) { Write-Host "[local-video-compressor-msix] $Message" -ForegroundColor Cyan }
 
 function Add-CertificateToStore([string]$Scope, [string]$StoreName, [string]$Path) {
-    $args = @('-addstore', '-f', $StoreName, $Path)
-    if ($Scope -eq 'CurrentUser') { $args = @('-user') + $args }
-
     Write-Info "Certificaat vertrouwen in $Scope\\$StoreName"
-    $process = Start-Process -FilePath 'certutil.exe' -ArgumentList $args -Wait -PassThru -WindowStyle Hidden
-    if ($process.ExitCode -ne 0) { throw "certutil $Scope -addstore $StoreName failed with exit code $($process.ExitCode)" }
+    $args = @('-f', '-addstore', $StoreName, $Path)
+    if ($Scope -eq 'CurrentUser') { $args = @('-user') + $args }
+    & certutil.exe @args | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "certutil $Scope -addstore $StoreName failed with exit code $LASTEXITCODE" }
 }
 
 function Assert-AppxSigningCertificate([System.Security.Cryptography.X509Certificates.X509Certificate2]$Certificate) {
@@ -47,18 +46,19 @@ try {
     Write-Info "MSIX: $resolvedMsix"
     Write-Info "Cert: $($cert.Subject) / $($cert.Thumbprint)"
 
-    foreach ($store in @('Root', 'TrustedPublisher', 'TrustedPeople')) {
-        Add-CertificateToStore -Scope 'CurrentUser' -StoreName $store -Path $resolvedCert
-    }
-
     # AppX deployment validates the package chain with the machine trust provider on
-    # some Windows builds. If the caller is elevated, also trust the beta cert in
-    # LocalMachine so the main Windows 11 context-menu package installs reliably.
+    # recent Windows builds. Use LocalMachine when elevated; otherwise fall back to
+    # CurrentUser for non-elevated/manual installs.
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = [Security.Principal.WindowsPrincipal]::new($identity)
     if ($principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
         foreach ($store in @('Root', 'TrustedPublisher', 'TrustedPeople')) {
             Add-CertificateToStore -Scope 'LocalMachine' -StoreName $store -Path $resolvedCert
+        }
+    }
+    else {
+        foreach ($store in @('Root', 'TrustedPublisher', 'TrustedPeople')) {
+            Add-CertificateToStore -Scope 'CurrentUser' -StoreName $store -Path $resolvedCert
         }
     }
 
