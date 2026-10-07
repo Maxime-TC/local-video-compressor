@@ -17,3 +17,12 @@ $RECYCLE.BIN/
 # Release packages
 /dist/
 *.zip
+
+# Local signing material and credentials
+*.pfx
+*.p12
+*.key
+*.key.pem
+.env
+.env.*
+settings.json

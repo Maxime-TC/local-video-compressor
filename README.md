@@ -2,16 +2,17 @@
 
 Windows context-menu tool om screenrecordings en andere video's lokaal kleiner te maken met `ffmpeg`.
 
-> Stable line: `v0.4.0` remains the registry-based fallback. This beta branch adds a packaged native Windows 11 shell extension under `native/` for primary context-menu integration.
+> **Experimenteel / op eigen risico.** Dit project is grotendeels met AI-assistentie ("vibe coded") gebouwd en is niet onafhankelijk op veiligheid of betrouwbaarheid geaudit. Controleer de code en maak een back-up van belangrijke video's voordat je het gebruikt. Er is geen garantie of officiële ondersteuning; zie de [MIT-licentie](LICENSE). Bugs, verbeteringen en pull requests zijn welkom — zie [Bijdragen](#bijdragen). Meld kwetsbaarheden via [SECURITY.md](SECURITY.md), niet in een publiek issue.
+
+De klassieke `v0.4.0`-lijn gebruikt registry-integratie. De `v0.5.x`-beta voegt een native Windows 11 shell extension toe onder `native/`.
 
 Doel: rechtsklik in Windows Verkenner op een video → kies een compressiepreset → er verschijnt een nieuw `.mp4` bestand naast het origineel. Geen cloud, geen upload, geen achtergrondservice.
 
 ## Status
 
-Production-ready MVP voor persoonlijk/teamgebruik:
+Experimentele MVP, vooral getest op eigen toestellen:
 
-- installeert per gebruiker onder `%LOCALAPPDATA%\Programs\LocalVideoCompressor`
-- schrijft alleen HKCU registry keys, dus geen adminrechten nodig
+- de klassieke installatie draait per gebruiker onder `%LOCALAPPDATA%\Programs\LocalVideoCompressor` en gebruikt HKCU registry keys
 - gebruikt gebundelde `ffmpeg.exe`
 - draait alleen tijdens compressie; geen resident process, service, scheduled task of autostart
 - schrijft eerst naar tijdelijke output en verplaatst pas na succesvolle compressie
@@ -21,7 +22,7 @@ Production-ready MVP voor persoonlijk/teamgebruik:
 
 ## Installatie
 
-### Aanbevolen voor Windows 11 beta
+### Windows 11 beta — alleen voor testtoestellen
 
 Download en start:
 
@@ -29,17 +30,17 @@ Download en start:
 LocalVideoCompressor-0.5.10-beta-Win11-Setup.exe
 ```
 
-Deze installer wizard:
+Deze installer wizard is experimenteel en **niet aanbevolen voor publieke installatie**. Hij:
 
 - installeert de backend onder `%LOCALAPPDATA%\Programs\LocalVideoCompressor`
 - installeert de MSIX shell extension voor het primaire Windows 11 context-menu
-- vertrouwt het meegeleverde beta/testcert voor de huidige Windows-gebruiker
+- installeert een meegeleverd zelfondertekend beta/testcertificaat in de Windows-certificaatopslag; hiervoor kan administrator-/UAC-toestemming nodig zijn
 - kan Windows Verkenner automatisch herstarten
 - voorziet een gewone uninstall wizard via Windows **Apps & features**
 
-> Let op: deze beta/testcert flow is alleen bedoeld voor Maxime-controlled devices. Voor publieke distributie is echte code signing nodig.
+> Installeer dit beta-certificaat niet op een toestel dat je niet zelf beheert. Het vertrouwen van een zelfondertekend certificaat verandert de trust-instellingen van Windows. Voor brede distributie is een passend ondertekende release nodig.
 
-### Classic fallback
+### Classic fallback — voor wie de tool wil proberen
 
 Download en unzip de release, of kies de classic fallback in de installer. Dubbelklik:
 
@@ -61,7 +62,7 @@ en registreert het context-menu voor:
 - `.avi`
 - `.webm`
 
-Op Windows 11 verschijnt deze classic fallback meestal onder **Show more options**. Gebruik de Win11 setup wizard/MSIX voor het hoofd-contextmenu.
+Op Windows 11 verschijnt deze classic fallback meestal onder **Show more options**. Deze route heeft geen MSIX-testcertificaat nodig. Download alleen van de officiële GitHub Releases-pagina en controleer wat je installeert.
 
 ## Gebruik
 
@@ -90,7 +91,7 @@ Als `naam_compressed.mp4` al bestaat, gebruikt de tool automatisch een timestamp
 - Geen netwerkverkeer door de app zelf.
 - Geen externe API.
 - Originele video wordt nooit gewijzigd.
-- Geen adminrechten nodig.
+- De klassieke fallback heeft geen adminrechten nodig; de Windows 11 beta-installer kan UAC vereisen.
 - Geen achtergrondservice of autostart.
 - Geen permanente logbestanden met bestandsnamen/paden, tenzij debug logging expliciet aangezet is.
 
@@ -174,6 +175,10 @@ De beta branch bevat nu ook een native/packaged shell extension (`IExplorerComma
 ```
 
 Normale beta-modus opent geen willekeurige command terminal. Debug console/logging kan via de settings JSON hierboven.
+
+## Bijdragen
+
+Verbeteringen, bugreports en pull requests zijn welkom. Beschrijf bij een issue hoe je het probleem reproduceert; vermeld Windows-versie, installatieroute en relevante preset. Deel geen privévideo's, bestandspaden of logs met gevoelige gegevens. Voor codewijzigingen: leg kort uit wat verandert en hoe je het getest hebt. Zie ook [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## ffmpeg
 
