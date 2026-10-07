@@ -109,6 +109,36 @@ function Resolve-CertificateThumbprint {
     throw "No signing certificate with private key found for subject '$CertificateSubject'. Pass -CertificateThumbprint explicitly."
 }
 
+function Assert-SigningCertificateUsable([string]$Thumbprint) {
+    $normalized = ($Thumbprint -replace '\s', '').ToUpperInvariant()
+    $cert = Get-ChildItem Cert:\CurrentUser\My, Cert:\LocalMachine\My -ErrorAction SilentlyContinue |
+        Where-Object { ($_.Thumbprint -replace '\s', '').ToUpperInvariant() -eq $normalized } |
+        Select-Object -First 1
+    if (-not $cert) { throw "Signing certificate not found: $Thumbprint" }
+
+    $basicConstraints = $cert.Extensions | Where-Object { $_.Oid.Value -eq '2.5.29.19' } | Select-Object -First 1
+    if (-not $basicConstraints) {
+        throw "Signing certificate $($cert.Thumbprint) is missing Basic Constraints. Create a new beta cert with native\New-BetaSigningCertificate.ps1 and rebuild."
+    }
+}
+
+function Assert-PfxCertificateUsable([string]$Path, [string]$Password) {
+    if (-not $Path) { return }
+    $flags = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::DefaultKeySet
+    if ($Password) {
+        $secure = ConvertTo-SecureString -String $Password -AsPlainText -Force
+        $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($Path, $secure, $flags)
+    }
+    else {
+        $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($Path)
+    }
+
+    $basicConstraints = $cert.Extensions | Where-Object { $_.Oid.Value -eq '2.5.29.19' } | Select-Object -First 1
+    if (-not $basicConstraints) {
+        throw "PFX signing certificate $($cert.Thumbprint) is missing Basic Constraints. Create a new beta cert with native\New-BetaSigningCertificate.ps1 or add basicConstraints=CA:FALSE in CI."
+    }
+}
+
 Write-Step "Building $Configuration|$Platform"
 $msbuild = Find-MSBuild
 & $msbuild $solution /m /p:Configuration=$Configuration /p:Platform=$Platform
@@ -144,11 +174,13 @@ Write-Step "Signing MSIX"
 $signtool = Find-WindowsKitTool 'signtool.exe'
 if ($PfxPath) {
     if (-not (Test-Path -LiteralPath $PfxPath -PathType Leaf)) { throw "PFX not found: $PfxPath" }
+    Assert-PfxCertificateUsable -Path $PfxPath -Password $PfxPassword
     $signArgs = @('sign', '/fd', 'SHA256', '/f', $PfxPath)
     if ($PfxPassword) { $signArgs += @('/p', $PfxPassword) }
 }
 else {
     $thumbprint = Resolve-CertificateThumbprint
+    Assert-SigningCertificateUsable -Thumbprint $thumbprint
     $signArgs = @('sign', '/fd', 'SHA256', '/sha1', $thumbprint)
 }
 if ($TimestampUrl) { $signArgs += @('/tr', $TimestampUrl, '/td', 'SHA256') }

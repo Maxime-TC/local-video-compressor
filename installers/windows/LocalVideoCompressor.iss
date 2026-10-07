@@ -19,7 +19,7 @@ OutputBaseFilename=LocalVideoCompressor-0.5.10-beta-Win11-Setup
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
-PrivilegesRequired=lowest
+PrivilegesRequired=admin
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 SetupIconFile=..\..\assets\local-video-compressor.ico
@@ -72,9 +72,10 @@ Type: filesandordirs; Name: "{localappdata}\LocalVideoCompressor\logs"
 [Code]
 function InitializeSetup(): Boolean;
 begin
-  MsgBox('This beta is intended for Maxime-controlled devices only.' + #13#10#13#10 +
-    'For the modern Windows 11 main context menu, keep the MSIX integration selected. The classic fallback appears under Show more options.',
-    mbInformation, MB_OK);
+  if not WizardSilent then
+    MsgBox('This beta is intended for Maxime-controlled devices only.' + #13#10#13#10 +
+      'For the modern Windows 11 main context menu, keep the MSIX integration selected. The classic fallback appears under Show more options.',
+      mbInformation, MB_OK);
   Result := True;
 end;
 

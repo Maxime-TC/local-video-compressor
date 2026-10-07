@@ -22,22 +22,41 @@ $ErrorActionPreference = 'Stop'
 
 function Write-Info([string]$Message) { Write-Host "[local-video-compressor-msix] $Message" -ForegroundColor Cyan }
 
-function Add-CertificateToStore([string]$StoreName, [string]$Path) {
-    Write-Info "Certificaat vertrouwen in CurrentUser\\$StoreName"
-    $process = Start-Process -FilePath 'certutil.exe' -ArgumentList @('-user', '-addstore', $StoreName, $Path) -Wait -PassThru -WindowStyle Hidden
-    if ($process.ExitCode -ne 0) { throw "certutil -addstore $StoreName failed with exit code $($process.ExitCode)" }
+function Add-CertificateToStore([string]$Scope, [string]$StoreName, [string]$Path) {
+    Write-Info "Certificaat vertrouwen in $Scope\\$StoreName"
+    $args = @('-f', '-addstore', $StoreName, $Path)
+    if ($Scope -eq 'CurrentUser') { $args = @('-user') + $args }
+    & certutil.exe @args | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "certutil $Scope -addstore $StoreName failed with exit code $LASTEXITCODE" }
+}
+
+function Assert-AppxSigningCertificate([System.Security.Cryptography.X509Certificates.X509Certificate2]$Certificate) {
+    $basicConstraints = $Certificate.Extensions | Where-Object { $_.Oid.Value -eq '2.5.29.19' } | Select-Object -First 1
+    if (-not $basicConstraints) {
+        throw "Het MSIX signing certificaat is ongeldig: Basic Constraints ontbreekt. Maak een nieuw code-signing certificaat met BasicConstraints CA=false en bouw/sign de MSIX opnieuw. Thumbprint: $($Certificate.Thumbprint)"
+    }
 }
 
 try {
     $resolvedMsix = (Resolve-Path -LiteralPath $MsixPath).Path
     $resolvedCert = (Resolve-Path -LiteralPath $CertificatePath).Path
     $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($resolvedCert)
+    Assert-AppxSigningCertificate -Certificate $cert
 
     Write-Info "MSIX: $resolvedMsix"
     Write-Info "Cert: $($cert.Subject) / $($cert.Thumbprint)"
 
+    # AppX deployment validates the package chain with the machine trust provider on
+    # recent Windows builds. Use LocalMachine when elevated; otherwise fall back to
+    # CurrentUser for non-elevated/manual installs.
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = [Security.Principal.WindowsPrincipal]::new($identity)
+    if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        throw 'Windows 11 main context-menu installatie vereist administratorrechten om het MSIX beta-certificaat in de LocalMachine trust stores te plaatsen. Start de installer opnieuw en accepteer de UAC prompt.'
+    }
+
     foreach ($store in @('Root', 'TrustedPublisher', 'TrustedPeople')) {
-        Add-CertificateToStore -StoreName $store -Path $resolvedCert
+        Add-CertificateToStore -Scope 'LocalMachine' -StoreName $store -Path $resolvedCert
     }
 
     Write-Info 'MSIX package installeren/updaten'
